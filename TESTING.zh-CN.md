@@ -40,6 +40,7 @@
 | [`tests/test_text.py`](tests/test_text.py) | 文字型页清理：每页重复的页眉页脚去掉（页码不同也算），正文、标题、表格、每页数字不同的「小计」不误删；页眉夹在跨页表格中间时不影响合并；部首码位（⻋、⽤）、兼容表意文字（U+F9DB 率）换回常用字；docx 默认东亚语言改成正文语言 |
 | [`tests/test_i18n.py`](tests/test_i18n.py) | 中英文文案：`Accept-Language` 协商（q 值、不支持的语言、默认语言），每条文案两种语言参数一致、都能格式化 |
 | [`tests/test_images.py`](tests/test_images.py) | 图片转 PDF：按原图像素识别不放大、超大图缩小、webp、多页 TIFF、手机照片 EXIF 方向、透明背景 |
+| [`tests/test_jobs.py`](tests/test_jobs.py) | 任务状态：查询读进度时任务刚好结束，状态保持 succeeded / failed，不会被改回 running；查询返回字段一致的快照，之后的变更不影响已返回的快照；queued → running → succeeded；其他 Key 查不到任务 |
 | [`dify-plugin/tests/test_chunking.py`](dify-plugin/tests/test_chunking.py) | 插件分段：分段最大字数和表格最大字数、跨页表格单独成段、超长表格按行切开带表头 |
 | [`tests/check_pipeline.py`](tests/check_pipeline.py) | 10 页混合样例（[`make_sample.py`](tests/make_sample.py) 生成）：分类、可搜索 PDF 逐像素一致且能搜到文字、Word、Markdown |
 | [`tests/check_tables.py`](tests/check_tables.py) | 跨页表格和 Word 样例（[`make_tables_sample.py`](tests/make_tables_sample.py) 生成）：合并行数、doc / docx 转换、嵌入扫描图片识别、Word 输出的表格合并 |

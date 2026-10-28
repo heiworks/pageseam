@@ -12,7 +12,7 @@ def _float(name: str, default: float) -> float:
     return float(os.environ.get(name) or default)
 
 
-VERSION = "0.1.3"
+VERSION = "0.1.4"
 
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 # 逗号分隔的多个 Key，便于轮换；每个 Key 只能看到自己提交的任务

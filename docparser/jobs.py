@@ -13,7 +13,7 @@ import threading
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from docparser import config
 
@@ -92,26 +92,29 @@ class JobManager:
         future = self._pool.submit(_run, job.dir, {**options, "filename": filename})
         future.add_done_callback(lambda fut, job=job: self._done(job, fut))
         # 进程池不提供「开始执行」的回调，由 pipeline 写入 progress.json 后再标记为 running
-        return job
+        with self._lock:
+            return replace(job)
 
     def _done(self, job: Job, future) -> None:
-        job.finished_at = time.time()
         try:
-            job.result = future.result()
-            job.status = SUCCEEDED
+            result, status, error = future.result(), SUCCEEDED, None
         except Exception as e:  # noqa: BLE001 — 任何失败都要反映到任务状态里
             logger.exception("job %s failed", job.id)
-            job.status, job.error = FAILED, f"{type(e).__name__}: {e}"
+            result, status, error = {}, FAILED, f"{type(e).__name__}: {e}"
+        with self._lock:
+            job.finished_at, job.result, job.status, job.error = time.time(), result, status, error
 
     def get(self, job_id: str, owner: str) -> Job | None:
+        """返回任务的快照：_done 在另一个线程里写入，直接读任务可能读到写了一半的状态。"""
         job = self._jobs.get(job_id)
         if not job or job.owner != owner:
             return None
-        if job.status == QUEUED:
-            progress = job.progress()
-            if progress:
+        progress = job.progress() if job.status == QUEUED else {}
+        with self._lock:
+            # 读 progress.json 期间任务可能已经结束，不能把结束状态改回 running
+            if progress and job.status == QUEUED:
                 job.status, job.started_at = RUNNING, progress.get("started_at")
-        return job
+            return replace(job)
 
     def delete(self, job_id: str, owner: str) -> bool:
         job = self.get(job_id, owner)
